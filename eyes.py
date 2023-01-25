@@ -15,34 +15,53 @@ class Eyes:
         self.landmark_points = output.multi_face_landmarks
 
 
-    def detect_eye(self, frame) -> list[tuple[int]]:
+    def detect_left_eye(self, frame) -> list[tuple[int]] | None:
         self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
-            for landmark in landmarks[474:478]:
+            for landmark in [landmarks[463], landmarks[466], landmarks[258], landmarks[253]]: # [landmarks[463], landmarks[466], landmarks[385], landmarks[253]]: # [landmarks[463], landmarks[466], landmarks[444]]: # 450:469 # [landmarks[463], landmarks[466], landmarks[385], landmarks[253]]
                 x = int(landmark.x * self.frame_w)
                 y = int(landmark.y * self.frame_h)
-                cv2.ellipse(frame, self.detect_pupil(frame)) # TODO
-            return landmarks[474:478]
+                cv2.circle(frame, (x, y), 1, (255, 0, 0))
+            return [landmarks[463], landmarks[466], landmarks[258], landmarks[253]]
+        return None
 
-
-    def detect_pupil(self, frame) -> tuple[int] | None:
+    
+    def detect_right_eye(self, frame) -> list[tuple[int]] | None:
+        self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
-            landmark = landmarks[473]
-            x = int(landmark.x * self.frame_w)
-            y = int(landmark.y * self.frame_h)
-            cv2.circle(frame, (x, y), 3, (0, 255, 0))
-            return (x, y)
+            for landmark in [landmarks[173], landmarks[226], landmarks[27], landmarks[23]]: # [landmarks[463], landmarks[466], landmarks[444]]: # 450:469 # [landmarks[463], landmarks[466], landmarks[385], landmarks[253]]
+                x = int(landmark.x * self.frame_w)
+                y = int(landmark.y * self.frame_h)
+                cv2.circle(frame, (x, y), 1, (255, 0, 0))
+            return [landmarks[173], landmarks[223], landmarks[27], landmarks[23]]
+        return None
+
+
+    def detect_left_pupil(self, frame) -> tuple[int] | None:
+        self.get_landmarks(frame)
+        if self.landmark_points:
+            landmarks = self.landmark_points[0].landmark
+            pupil = landmarks[473]
+            x = int(pupil.x * self.frame_w)
+            y = int(pupil.y * self.frame_h)
+            cv2.circle(frame, (x, y), 1, (0, 255, 0))
+            return pupil
+        return None
+
+
+    def detect_right_pupil(self, frame) -> tuple[int] | None:
+        self.get_landmarks(frame)
+        if self.landmark_points:
+            landmarks = self.landmark_points[0].landmark
+            pupil = landmarks[468]
+            x = int(pupil.x * self.frame_w)
+            y = int(pupil.y * self.frame_h)
+            cv2.circle(frame, (x, y), 1, (0, 255, 0))
+            return pupil
         return None
 
 
     def detect_head_movement(self) -> tuple[int]:
-        if self.x is None or self.y is None:
-            return None
-        if self.frame_h is None or self.frame_w is None:
-            raise Exception("Frame has no shape!")
-
-        res_x = 3460 - (self.x / self.frame_w * 3460)
-        res_y = self.y / self.frame_h * 1080
-        return (res_x, res_y)
+        pass

@@ -5,12 +5,13 @@ import pyautogui
 
 class Mouse:
     def __init__(self, MOUSE_SMOOTHNESS):
+        pyautogui.FAILSAFE = False
         self.MOUSE_SMOOTHNESS = MOUSE_SMOOTHNESS
-        self.PRECISION = 3 # max possible delta (delta value if you move your pupil to the edge of the eye)
+        self.VERT_MULTIPLIER = 1 # max possible delta (delta value if you move your pupil to the edge of the eye)
+        self.HOR_MULTIPLIER = 1 # max possible delta (delta value if you move your pupil to the edge of the eye)
         self.MAX_MOVEMENT = 50 # max number of pixel the pointer will move in one frame
         self.MAX_ACCELERATION = 0.1 # min and max prevent mouse flickering or crazy movement
         self.MIN_ACCELERATION = 0.01
-        self.old_point = None
         self.screen_size = self.get_screen_size()
         
     
@@ -22,29 +23,36 @@ class Mouse:
         return True
 
 
-    def calc_delta(self, new_point) -> tuple[float]:
-        if new_point is None or self.old_point is None:
-            return (0, 0)
-        # print(f'POINTS: {new_point}, {self.old_point}')
-        new_x, new_y = new_point
-        old_x, old_y = self.old_point
-        delta = (new_x - old_x, new_y - old_y)
-        # print(f'DELTA: {delta}')
-        if abs(delta[0]) < self.MIN_ACCELERATION or abs(delta[1]) < self.MIN_ACCELERATION:
-            return (0, 0)
-        elif abs(delta[0]) > self.MAX_ACCELERATION or abs(delta[1]) > self.MAX_ACCELERATION:
-            return (self.MAX_ACCELERATION, self.MAX_ACCELERATION)
-        else:
-            return delta
+    def calc_pupil(self, curr_eye: list[tuple[int]], curr_pupil: tuple[int]) -> tuple[float] | None:
+        # if self.prev_eye is None or self.prev_pupil is None:
+        #     return None
+        try:
+            x_axis = abs(curr_eye[1].x - curr_eye[0].x)
+            y_axis = abs(curr_eye[3].y - curr_eye[2].y)
+
+            x_moved_pupil = curr_pupil.x - curr_eye[0].x
+            y_moved_pupil = curr_pupil.y - curr_eye[2].y
+            
+            x = x_moved_pupil * self.screen_size[0] / x_axis
+            y = y_moved_pupil * self.screen_size[1] / y_axis
+            
+            print(f'POINT: {x, y}')
+            return (x, y)
+        except:
+            return None
 
 
-    def move_mouse(self, point: tuple[int]):
-        pyautogui.moveTo(point)
+
+    def move_mouse(self, curr_eye: list[tuple[int]], curr_pupil: tuple[int]):
+        position = self.calc_pupil(curr_eye, curr_pupil)
+        if position is not None:
+            x = position[0] * self.HOR_MULTIPLIER
+            y = position[1] * self.VERT_MULTIPLIER
+            pyautogui.moveTo(x, y, 1/self.MOUSE_SMOOTHNESS)
 
 
-    def get_screen_size(self, width_is_fixed:bool = False) -> tuple[int]:
+    def get_screen_size(self, width_is_fixed: bool = False) -> tuple[int]:
         w, h = 0, 0
-
         for monitor in get_monitors():
             if width_is_fixed:
                 w = monitor.width
@@ -52,5 +60,4 @@ class Mouse:
             else:
                 w += monitor.width
                 h = monitor.height
-
         return (w, h)
