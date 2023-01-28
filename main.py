@@ -19,7 +19,7 @@ while True:
     keypress = cv2.waitKey(1)
     time.sleep(1/FPS)
 
-    if None in [my_mouse.MAX_DISTANCE, my_mouse.MIN_DISTANCE]:
+    if None in [my_mouse.MAX_L_DISTANCE, my_mouse.MAX_L_DISTANCE, my_mouse.MIN_DISTANCE]:
         my_mouse.calibrate(frame)
 
     distance = eyes.detect_eyes_distance(frame)
