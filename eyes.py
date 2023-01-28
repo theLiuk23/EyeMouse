@@ -1,5 +1,6 @@
 import cv2
 import mediapipe as mp
+import math
 
 class Eyes:
     def __init__(self):
@@ -15,7 +16,7 @@ class Eyes:
         self.landmark_points = output.multi_face_landmarks
 
 
-    def detect_left_eye(self, frame) -> list[tuple[int]] | None:
+    def detect_left_eye(self, frame) -> list[tuple[float]] | None:
         self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
@@ -27,7 +28,7 @@ class Eyes:
         return None
 
     
-    def detect_right_eye(self, frame) -> list[tuple[int]] | None:
+    def detect_right_eye(self, frame) -> list[tuple[float]] | None:
         self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
@@ -39,7 +40,7 @@ class Eyes:
         return None
 
 
-    def detect_left_pupil(self, frame) -> tuple[int] | None:
+    def detect_left_pupil(self, frame) -> tuple[float] | None:
         self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
@@ -47,11 +48,11 @@ class Eyes:
             x = int(pupil.x * self.frame_w)
             y = int(pupil.y * self.frame_h)
             cv2.circle(frame, (x, y), 1, (0, 255, 0))
-            return pupil
+            return (pupil.x, pupil.y)
         return None
 
 
-    def detect_right_pupil(self, frame) -> tuple[int] | None:
+    def detect_right_pupil(self, frame) -> tuple[float] | None:
         self.get_landmarks(frame)
         if self.landmark_points:
             landmarks = self.landmark_points[0].landmark
@@ -59,9 +60,35 @@ class Eyes:
             x = int(pupil.x * self.frame_w)
             y = int(pupil.y * self.frame_h)
             cv2.circle(frame, (x, y), 1, (0, 255, 0))
-            return pupil
+            return (pupil.x, pupil.y)
         return None
 
 
-    def detect_head_movement(self) -> tuple[int]:
-        pass
+    def detect_nose(self, frame) -> tuple[int] | None:
+        self.get_landmarks(frame)
+        if self.landmark_points:
+            landmarks = self.landmark_points[0].landmark
+            nose = landmarks[195]
+            x = int(nose.x * self.frame_w)
+            y = int(nose.y * self.frame_h)
+            cv2.circle(frame, (x, y), 1, (0, 255, 0))
+            return (nose.x, nose.y)
+        return None
+
+
+    def detect_eyes_distance(self, frame) -> int | None:
+        l_pupil = self.detect_left_pupil(frame)
+        r_pupil = self.detect_right_pupil(frame)
+        nose = self.detect_nose(frame)
+
+        if None in [nose, l_pupil, r_pupil]:
+            return None
+
+        is_right = abs(r_pupil[0] - nose[0]) < abs(l_pupil[0] - nose[0])
+        distance = math.sqrt((r_pupil[0] - l_pupil[0])**2 + (r_pupil[1] - l_pupil[1])**2)
+        distance = 1 / distance
+
+        if is_right:
+            return distance
+        else:
+            return -distance
