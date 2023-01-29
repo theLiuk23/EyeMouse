@@ -76,7 +76,19 @@ class Eyes:
         return None
 
 
-    def detect_eyes_distance(self, frame) -> int | None:
+
+
+
+    def get_pupils_position(self, frame) -> tuple(float) | None:
+        pupil1, pupil2 = self.detect_left_pupil(frame), self.detect_right_pupil(frame)
+        eye1, eye2 = self.detect_left_eye(frame), self.detect_right_eye(frame)
+        if None in [pupil1, pupil2, eye1, eye2]: return None
+
+        return (0, 0)
+
+
+
+    def get_eyes_distance(self, frame) -> int | None:
         l_pupil = self.detect_left_pupil(frame)
         r_pupil = self.detect_right_pupil(frame)
         nose = self.detect_nose(frame)
@@ -86,9 +98,8 @@ class Eyes:
 
         is_right = abs(r_pupil[0] - nose[0]) < abs(l_pupil[0] - nose[0])
         distance = math.sqrt((r_pupil[0] - l_pupil[0])**2 + (r_pupil[1] - l_pupil[1])**2)
-        distance = 1 / distance
 
         if is_right:
-            return distance
+            return 1/distance
         else:
-            return -distance
+            return -1/distance
